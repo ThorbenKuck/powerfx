@@ -31,17 +31,13 @@ public class MVPProcessor extends AbstractProcessor {
 	private boolean doneProcessing = false;
 
 	private boolean checkAgainstInterface(TypeMirror toCheck, TypeMirror viewInterface) {
+		messager.printMessage(Diagnostic.Kind.NOTE, toCheck + " isAssignable to " + viewInterface + " = " + types.isAssignable(toCheck, viewInterface));
 		return types.isAssignable(toCheck, viewInterface);
 	}
 
 	private boolean isOfInterface(Element element, TypeMirror viewInterfaceMirror) {
 		log("Checking " + element + " and  " + viewInterfaceMirror + " ar assignable", element);
-		TypeElement typeElement = (TypeElement) element;
-		if (!checkAgainstInterface(element.asType(), viewInterfaceMirror)) {
-			return false;
-		} else {
-			return true;
-		}
+		return checkAgainstInterface(element.asType(), viewInterfaceMirror);
 	}
 
 	private void error(String msg, Element element, AnnotationMirror mirror) {
@@ -118,8 +114,8 @@ public class MVPProcessor extends AbstractProcessor {
 
 		for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(ViewImplementation.class)) {
 			if (match(annotatedElement, viewInterface, "Only classes can be annotated with @ViewImplementation")) {
-				System.out.println("Looking at " + annotatedElement);
-				viewElements.add(new ViewContainer(annotatedElement, findMatchingInterface(annotatedElement, viewInterface)));
+				messager.printMessage(Diagnostic.Kind.NOTE, "Found @ViewImplementation on " + annotatedElement);
+				viewElements.add(new ViewContainer((TypeElement) annotatedElement, findMatchingInterface(annotatedElement, viewInterface)));
 			} else {
 				return false;
 			}
@@ -129,11 +125,14 @@ public class MVPProcessor extends AbstractProcessor {
 
 		for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(PresenterImplementation.class)) {
 			if (match(annotatedElement, presenterInterface, "Only classes can be annotated with @PresenterImplementation")) {
-				presenterElements.add(new PresenterContainer(annotatedElement, findMatchingInterface(annotatedElement, presenterInterface)));
+				messager.printMessage(Diagnostic.Kind.NOTE, "Found @PresenterImplementation on " + annotatedElement);
+				presenterElements.add(new PresenterContainer((TypeElement) annotatedElement, findMatchingInterface(annotatedElement, presenterInterface)));
 			} else {
 				return false;
 			}
 		}
+
+		log("[SUCCESS] Finished finding all annotated classes");
 
 		FactoryProcessor factoryProcessor = new FactoryProcessor(viewElements, presenterElements, elements, types);
 

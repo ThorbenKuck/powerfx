@@ -1,5 +1,6 @@
 package com.github.thorbenkuck.powerfx.annotations;
 
+import com.github.thorbenkuck.powerfx.NullView;
 import com.github.thorbenkuck.powerfx.View;
 
 import java.lang.annotation.*;
@@ -9,6 +10,6 @@ import java.lang.annotation.*;
 @Documented
 public @interface PresenterImplementation {
 
-	Class<? extends View> value();
+	Class<? extends View> requireViewType() default NullView.class;
 
 }

@@ -13,7 +13,10 @@
 .idea/sqlDataSources.xml
 .idea/dynamic.xml
 .idea/uiDesigner.xml
-NetCom2.iml
+powerui/powerui.iml
+powerui/target/*
+test/powerui-test.iml
+test/target/*
 
 # Gradle:
 .idea/gradle.xml

@@ -1,7 +1,19 @@
 package com.github.thorbenkuck.powerfx;
 
-public interface PresenterFactory<T extends View> {
+import com.github.thorbenkuck.powerfx.pipe.PipelineElement;
 
-	<S extends Presenter<T>> S create();
+import java.util.Collections;
+import java.util.List;
+
+public interface PresenterFactory<T extends View, S extends Presenter<T>> {
+
+	S create();
+
+	default void apply(Object presenter, SuperController superController) {
+	}
+
+	default List<PipelineElement<S>> getModifiers() {
+		return Collections.emptyList();
+	}
 
 }

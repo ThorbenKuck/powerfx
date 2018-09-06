@@ -1,23 +1,10 @@
 package com.github.thorbenkuck.powerfx.annotations.processors;
 
-import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 
-public class PresenterContainer {
-
-	private final Element element;
-	private final TypeMirror representedInterface;
-
-	public PresenterContainer(Element element, TypeMirror representedInterface) {
-		this.element = element;
-		this.representedInterface = representedInterface;
-	}
-
-	public Element getElement() {
-		return element;
-	}
-
-	public TypeMirror getRepresentedInterface() {
-		return representedInterface;
+public class PresenterContainer extends Container {
+	public PresenterContainer(TypeElement element, TypeMirror representedInterface) {
+		super(element, representedInterface);
 	}
 }

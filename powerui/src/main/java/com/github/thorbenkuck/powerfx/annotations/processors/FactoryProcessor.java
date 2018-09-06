@@ -9,7 +9,6 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FactoryProcessor {
 
@@ -28,7 +27,7 @@ public class FactoryProcessor {
 
 	public static TypeMirror getTypeMirror(PresenterImplementation annotation) {
 		try {
-			annotation.value();
+			annotation.requireViewType();
 		} catch (MirroredTypeException e) {
 			return e.getTypeMirror();
 		}
@@ -38,7 +37,7 @@ public class FactoryProcessor {
 
 	public static TypeMirror getTypeMirror(ViewImplementation annotation) {
 		try {
-			annotation.value();
+			annotation.requiredPresenterType();
 		} catch (MirroredTypeException e) {
 			return e.getTypeMirror();
 		}
@@ -46,35 +45,14 @@ public class FactoryProcessor {
 		return null;
 	}
 
-	private boolean isOkay(PresenterContainer container, ViewContainer viewContainer) {
-		TypeMirror presenterAnnotationValue = getTypeMirror(container.getElement().getAnnotation(PresenterImplementation.class));
-		return presenterAnnotationValue.equals(viewContainer.getRepresentedInterface());
-	}
-
-	private void handleViewElement(ViewContainer element) throws ProcessingException {
-		List<PresenterContainer> matchingPresenters = presenterContainers.stream()
-				.filter(e -> isOkay(e, element))
-				.collect(Collectors.toList());
-
-		if (matchingPresenters.size() == 0) {
-			throw new ProcessingException("Found no matching Presenters for the element " + element.getElement(), element.getElement());
-		}
-
-		if (matchingPresenters.size() > 1) {
-			throw new ProcessingException("Found multiple matching Presenters for the element " + element.getElement(), element.getElement());
-		}
-
-		PresenterContainer matchingPresenter = matchingPresenters.get(0);
-
-		classes.generate(element, matchingPresenter, filer);
-	}
-
 	public void doProcessing(Filer filer) throws ProcessingException {
-		System.out.println("Starting to process");
 		this.filer = filer;
 		for (ViewContainer e : viewContainers) {
-			System.out.println(e);
-			handleViewElement(e);
+			classes.generate(e, filer);
+		}
+
+		for (PresenterContainer e : presenterContainers) {
+			classes.generate(e, filer);
 		}
 	}
 }

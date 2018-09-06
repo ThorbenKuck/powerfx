@@ -14,6 +14,5 @@ public class Test extends Application {
 		superController.setMainStage(primaryStage);
 
 		superController.show(TestView.class);
-		TestView view = superController.showSeparate(TestView.class);
 	}
 }

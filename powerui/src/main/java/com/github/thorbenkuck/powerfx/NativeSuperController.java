@@ -6,6 +6,7 @@ import javafx.stage.Stage;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 class NativeSuperController implements SuperController {
 
@@ -13,7 +14,11 @@ class NativeSuperController implements SuperController {
 	private final AtomicReference<Stage> mainStage = new AtomicReference<>();
 	private final Map<Class<?>, ViewFactory<?, ?>> viewFactoryMap = new HashMap<>();
 	private final Map<Class<?>, PresenterFactory<?, ?>> presenterFactoryMap = new HashMap<>();
+	private final Object SUPPLIER_LOCK = new Object();
+	private final Object DISPATCHER_LOCK = new Object();
 	private final UICache cache = UICache.create();
+	private Supplier<Stage> stageSupplier = Stage::new;
+	private ViewDispatcher viewDispatcher = new AnonymousViewDispatcher();
 
 	private void handleCurrentView() {
 		View view = currentView.get();
@@ -73,6 +78,7 @@ class NativeSuperController implements SuperController {
 
 		S presenter = presenterFactory.create();
 		T view = viewFactory.create(presenter);
+		presenter.injectView(view);
 
 		Pipeline<T, S> pipeline = Pipeline.create();
 		pipeline.addPresenterModifier(presenterFactory.getModifiers());
@@ -80,18 +86,25 @@ class NativeSuperController implements SuperController {
 
 		pipeline.apply(view, presenter, this);
 
-		view.injectStage(stage);
-		presenter.instantiate(view);
-
-		if (!stage.isShowing()) {
-			stage.show();
+		synchronized (DISPATCHER_LOCK) {
+			return viewDispatcher.dispatch(view, presenter, stage);
 		}
-
-		return view;
 	}
 
 	private Stage createStage() {
-		return new Stage();
+		synchronized (SUPPLIER_LOCK) {
+			return stageSupplier.get();
+		}
+	}
+
+	@Override
+	public void createNewMainStage() {
+		final Stage stage;
+		synchronized (SUPPLIER_LOCK) {
+			stage = createStage();
+		}
+
+		mainStage.set(stage);
 	}
 
 	@Override
@@ -109,6 +122,24 @@ class NativeSuperController implements SuperController {
 	@Override
 	public <T extends View> T showSeparate(Class<T> type) {
 		return createAndShowNewView(type, createStage());
+	}
+
+	@Override
+	public void setStageSupplier(Supplier<Stage> stageSupplier) {
+		if (stageSupplier == null) {
+			throw new IllegalArgumentException("The Supplier<Stage> cannot be null!");
+		}
+
+		synchronized (SUPPLIER_LOCK) {
+			this.stageSupplier = stageSupplier;
+		}
+	}
+
+	@Override
+	public void setViewDispatcher(ViewDispatcher viewDispatcher) {
+		synchronized (DISPATCHER_LOCK) {
+			this.viewDispatcher = viewDispatcher;
+		}
 	}
 
 	@Override
@@ -133,6 +164,21 @@ class NativeSuperController implements SuperController {
 	public <T extends View, S extends Presenter<T>> void register(Class<T> type, ViewFactory<T, S> viewFactory) {
 		synchronized (viewFactoryMap) {
 			viewFactoryMap.put(type, viewFactory);
+		}
+	}
+
+	private final class AnonymousViewDispatcher implements ViewDispatcher {
+
+		@Override
+		public <T extends View, S extends Presenter<T>> T dispatch(T view, S presenter, Stage stage) {
+			view.injectStage(stage);
+			presenter.instantiate(view);
+
+			if (!stage.isShowing()) {
+				stage.show();
+			}
+
+			return view;
 		}
 	}
 }

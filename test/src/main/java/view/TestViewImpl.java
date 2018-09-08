@@ -1,11 +1,14 @@
+package view;
+
 import com.github.thorbenkuck.powerfx.annotations.InjectPresenter;
 import com.github.thorbenkuck.powerfx.annotations.ViewImplementation;
 import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import presenter.TestPresenter;
 
-@ViewImplementation(requiredPresenterType = TestPresenter.class)
-public class TestViewImpl implements TestView {
+@ViewImplementation(TestPresenter.class)
+class TestViewImpl implements TestView {
 
 	private final TestPresenter testPresenter;
 	private Stage stage;
@@ -22,8 +25,8 @@ public class TestViewImpl implements TestView {
 	}
 
 	@InjectPresenter
-	public void inject(TestPresenter testPresenter) {
-		System.out.println("TestPresenter injected");
+	void inject(TestPresenter testPresenter) {
+		System.out.println("presenter.TestPresenter injected. Same as mine: " + testPresenter.equals(this.testPresenter));
 	}
 
 	@Override

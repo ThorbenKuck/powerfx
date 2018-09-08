@@ -17,6 +17,7 @@
     <modules>
         <module>powerui</module>
         <module>test</module>
+        <module>core</module>
     </modules>
 
     <scm>

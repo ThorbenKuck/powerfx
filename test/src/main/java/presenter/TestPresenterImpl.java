@@ -1,7 +1,12 @@
+package presenter;
+
 import com.github.thorbenkuck.powerfx.annotations.InjectView;
 import com.github.thorbenkuck.powerfx.annotations.PresenterImplementation;
+import com.github.thorbenkuck.powerfx.annotations.PreventAutoLoad;
+import view.TestView;
 
-@PresenterImplementation(requireViewType = TestView.class)
+@PresenterImplementation(TestView.class)
+@PreventAutoLoad
 class TestPresenterImpl implements TestPresenter {
 
 	private TestView testView;
@@ -18,6 +23,6 @@ class TestPresenterImpl implements TestPresenter {
 
 	@InjectView
 	public void inject(TestView testView) {
-		System.out.println("TestView was injected!");
+		System.out.println("view.TestView was injected!");
 	}
 }

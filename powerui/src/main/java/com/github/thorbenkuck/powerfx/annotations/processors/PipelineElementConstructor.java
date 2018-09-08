@@ -83,10 +83,12 @@ public class PipelineElementConstructor {
 
 		StringBuilder stringBuilder = new StringBuilder();
 
-		for (int i = 0; i < strings.size() - 2; i++) {
+		for (int i = 0; i < strings.size() - 1; i++) {
+			System.out.println("[IN_LOOP]: Adding " + strings.get(i));
 			stringBuilder.append(strings.get(i)).append(",");
 		}
 
+		System.out.println("Adding " + strings.get(strings.size() - 1));
 		stringBuilder.append(strings.get(strings.size() - 1));
 
 		builder.addField(FieldSpec.builder(ParameterizedTypeName.get(ClassName.get(List.class),

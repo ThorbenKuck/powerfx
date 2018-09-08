@@ -37,7 +37,7 @@ public class FactoryProcessor {
 
 	public static TypeMirror getTypeMirror(ViewImplementation annotation) {
 		try {
-			annotation.requiredPresenterType();
+			annotation.value();
 		} catch (MirroredTypeException e) {
 			return e.getTypeMirror();
 		}

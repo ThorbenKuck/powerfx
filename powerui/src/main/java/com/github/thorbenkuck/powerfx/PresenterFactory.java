@@ -9,9 +9,6 @@ public interface PresenterFactory<T extends View, S extends Presenter<T>> {
 
 	S create();
 
-	default void apply(Object presenter, SuperController superController) {
-	}
-
 	default List<PipelineElement<S>> getModifiers() {
 		return Collections.emptyList();
 	}

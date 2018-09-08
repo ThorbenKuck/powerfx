@@ -17,6 +17,7 @@ powerui/powerui.iml
 powerui/target/*
 test/powerui-test.iml
 test/target/*
+core/powerfx-core.iml
 
 # Gradle:
 .idea/gradle.xml

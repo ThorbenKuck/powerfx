@@ -1,18 +1,16 @@
 import com.github.thorbenkuck.powerfx.SuperController;
-import javafx.application.Application;
-import javafx.stage.Stage;
+import com.github.thorbenkuck.powerfx.core.PowerFX;
+import view.TestView;
 
-public class Test extends Application {
+public class Test extends PowerFX {
 
 	public static void main(String[] args) {
 		launch(args);
 	}
 
 	@Override
-	public void start(Stage primaryStage) throws Exception {
-		SuperController superController = SuperController.open();
-		superController.setMainStage(primaryStage);
-
+	public void start(SuperController superController) throws Exception {
 		superController.show(TestView.class);
+		addShutdownListener(() -> System.out.println("Platform just shut down"));
 	}
 }

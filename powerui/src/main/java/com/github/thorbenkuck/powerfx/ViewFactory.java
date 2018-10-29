@@ -5,7 +5,7 @@ import com.github.thorbenkuck.powerfx.pipe.PipelineElement;
 import java.util.Collections;
 import java.util.List;
 
-public interface ViewFactory<T extends View, S extends Presenter<T>> {
+public interface ViewFactory<T extends View, S extends Presenter<T>> extends Identifiable<T> {
 
 	T create(S presenter);
 

@@ -14,8 +14,8 @@ class NativeSuperController implements SuperController {
 	private final AtomicReference<Stage> mainStage = new AtomicReference<>();
 	private final Map<Class<?>, ViewFactory<?, ?>> viewFactoryMap = new HashMap<>();
 	private final Map<Class<?>, PresenterFactory<?, ?>> presenterFactoryMap = new HashMap<>();
-	private final Object SUPPLIER_LOCK = new Object();
-	private final Object DISPATCHER_LOCK = new Object();
+	private final Object supplierLock = new Object();
+	private final Object dispatcherLock = new Object();
 	private final UICache cache = UICache.create();
 	private Supplier<Stage> stageSupplier = Stage::new;
 	private ViewDispatcher viewDispatcher = new AnonymousViewDispatcher();
@@ -86,23 +86,20 @@ class NativeSuperController implements SuperController {
 
 		pipeline.apply(view, presenter, this);
 
-		synchronized (DISPATCHER_LOCK) {
+		synchronized (dispatcherLock) {
 			return viewDispatcher.dispatch(view, presenter, stage);
 		}
 	}
 
 	private Stage createStage() {
-		synchronized (SUPPLIER_LOCK) {
+		synchronized (supplierLock) {
 			return stageSupplier.get();
 		}
 	}
 
 	@Override
 	public void createNewMainStage() {
-		final Stage stage;
-		synchronized (SUPPLIER_LOCK) {
-			stage = createStage();
-		}
+		final Stage stage = createStage();
 
 		mainStage.set(stage);
 	}
@@ -130,14 +127,14 @@ class NativeSuperController implements SuperController {
 			throw new IllegalArgumentException("The Supplier<Stage> cannot be null!");
 		}
 
-		synchronized (SUPPLIER_LOCK) {
+		synchronized (supplierLock) {
 			this.stageSupplier = stageSupplier;
 		}
 	}
 
 	@Override
 	public void setViewDispatcher(ViewDispatcher viewDispatcher) {
-		synchronized (DISPATCHER_LOCK) {
+		synchronized (dispatcherLock) {
 			this.viewDispatcher = viewDispatcher;
 		}
 	}

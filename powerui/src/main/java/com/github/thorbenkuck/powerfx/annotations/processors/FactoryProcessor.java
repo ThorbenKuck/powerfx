@@ -16,7 +16,6 @@ public class FactoryProcessor {
 	private final List<PresenterContainer> presenterContainers;
 	private final Elements elements;
 	private final Classes classes;
-	private Filer filer;
 
 	public FactoryProcessor(List<ViewContainer> viewContainers, List<PresenterContainer> presenterContainers, Elements elements, Types types) {
 		this.viewContainers = viewContainers;
@@ -46,7 +45,6 @@ public class FactoryProcessor {
 	}
 
 	public void doProcessing(Filer filer) throws ProcessingException {
-		this.filer = filer;
 		for (ViewContainer e : viewContainers) {
 			classes.generate(e, filer);
 		}
@@ -54,5 +52,7 @@ public class FactoryProcessor {
 		for (PresenterContainer e : presenterContainers) {
 			classes.generate(e, filer);
 		}
+
+		classes.generateServiceFiles(filer);
 	}
 }

@@ -1,15 +1,11 @@
 package com.github.thorbenkuck.powerfx;
 
-import com.github.thorbenkuck.powerfx.annotations.AutoLoad;
 import com.github.thorbenkuck.powerfx.exceptions.NoPresenterFactorySetException;
 import com.github.thorbenkuck.powerfx.exceptions.NoViewFactorySetException;
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ClassInfoList;
-import io.github.classgraph.ScanResult;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 public class SuperControllerMapping {
 
@@ -17,25 +13,8 @@ public class SuperControllerMapping {
 	private static final Map<Class<?>, PresenterFactory<?, ?>> presenterFactoryMap = new HashMap<>();
 
 	static {
-		ClassGraph classGraph = new ClassGraph();
-		ScanResult scanResult = classGraph.addClassLoader(SuperController.class.getClassLoader())
-				.enableAnnotationInfo()
-				.enableAllInfo()
-				.scan();
-
-		handle(scanResult.getClassesWithAnnotation(AutoLoad.class.getName()));
-	}
-
-	private static void handle(ClassInfoList classInfoList) {
-		List<Class<?>> classList = classInfoList.loadClasses();
-
-		classList.forEach(clazz -> {
-			try {
-				clazz.newInstance();
-			} catch (InstantiationException | IllegalAccessException e) {
-				e.printStackTrace();
-			}
-		});
+		ServiceLoader.load(ViewFactory.class).forEach(ViewFactory::getModifiers);
+		ServiceLoader.load(PresenterFactory.class).forEach(PresenterFactory::getModifiers);
 	}
 
 	public static <T extends View, S extends Presenter<T>> ViewFactory<T, S> getViewFactory(Class<T> type) {
@@ -46,7 +25,6 @@ public class SuperControllerMapping {
 		}
 
 		if (viewFactory == null) {
-
 			throw new NoViewFactorySetException("There is no ViewFactory registered for the View type" + type);
 		}
 

@@ -16,6 +16,7 @@
 powerui/powerui.iml
 powerui/target/*
 test/powerui-test.iml
+annotations/powerui-annotations.iml
 test/target/*
 core/powerfx-core.iml
 

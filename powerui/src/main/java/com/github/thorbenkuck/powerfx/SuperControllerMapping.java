@@ -3,25 +3,27 @@ package com.github.thorbenkuck.powerfx;
 import com.github.thorbenkuck.powerfx.exceptions.NoPresenterFactorySetException;
 import com.github.thorbenkuck.powerfx.exceptions.NoViewFactorySetException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
+import java.util.*;
 
 public class SuperControllerMapping {
 
-	private static final Map<Class<?>, ViewFactory<?, ?>> viewFactoryMap = new HashMap<>();
-	private static final Map<Class<?>, PresenterFactory<?, ?>> presenterFactoryMap = new HashMap<>();
+	private static final Map<Class<?>, ViewFactory<?>> viewFactoryMap = new HashMap<>();
+	private static final Map<Class<?>, PresenterFactory<?>> presenterFactoryMap = new HashMap<>();
 
 	static {
-		ServiceLoader.load(ViewFactory.class).forEach(ViewFactory::getModifiers);
-		ServiceLoader.load(PresenterFactory.class).forEach(PresenterFactory::getModifiers);
+		ServiceLoader.load(ViewFactory.class)
+				.forEach(viewFactory -> viewFactory.getIdentifier()
+					.forEach(type -> register((Class<?>) type, viewFactory)));
+		ServiceLoader.load(PresenterFactory.class)
+				.forEach(presenterFactory -> presenterFactory.getIdentifier()
+					.forEach(type -> register((Class<?>) type, presenterFactory)));
 	}
 
-	public static <T extends View, S extends Presenter<T>> ViewFactory<T, S> getViewFactory(Class<T> type) {
-		ViewFactory<T, S> viewFactory;
+	public static <T> ViewFactory<T> getViewFactory(Class<T> type) {
+		ViewFactory<T> viewFactory;
 
 		synchronized (viewFactoryMap) {
-			viewFactory = (ViewFactory<T, S>) viewFactoryMap.get(type);
+			viewFactory = (ViewFactory<T>) viewFactoryMap.get(type);
 		}
 
 		if (viewFactory == null) {
@@ -31,11 +33,11 @@ public class SuperControllerMapping {
 		return viewFactory;
 	}
 
-	public static <T extends View, S extends Presenter<T>> PresenterFactory<T, S> getPresenterFactory(Class<T> type) {
-		PresenterFactory<T, S> viewFactory;
+	public static <T> PresenterFactory<T> getPresenterFactory(Class<T> type) {
+		PresenterFactory<T> viewFactory;
 
 		synchronized (viewFactoryMap) {
-			viewFactory = (PresenterFactory<T, S>) presenterFactoryMap.get(type);
+			viewFactory = (PresenterFactory<T>) presenterFactoryMap.get(type);
 		}
 
 		if (viewFactory == null) {
@@ -45,20 +47,23 @@ public class SuperControllerMapping {
 		return viewFactory;
 	}
 
-	public static <T extends View, S extends Presenter<T>> void register(Class<T> type, PresenterFactory<T, S> presenterFactory, ViewFactory<T, S> viewFactory) {
-		register(type, presenterFactory);
-		register(type, viewFactory);
-	}
-
-	public static <T extends View, S extends Presenter<T>> void register(Class<T> type, ViewFactory<T, S> viewFactory) {
+	public static void register(Class<?> type, ViewFactory viewFactory) {
 		synchronized (viewFactoryMap) {
 			viewFactoryMap.put(type, viewFactory);
 		}
 	}
 
-	public static <T extends View, S extends Presenter<T>> void register(Class<T> type, PresenterFactory<T, S> presenterFactory) {
+	public static void register(Class<?> type, PresenterFactory presenterFactory) {
 		synchronized (presenterFactoryMap) {
 			presenterFactoryMap.put(type, presenterFactory);
 		}
+	}
+
+	public static List<PresenterFactory> getAllPresenterFactories() {
+		return new ArrayList<>(presenterFactoryMap.values());
+	}
+
+	public static List<ViewFactory> getAllViewFactories() {
+		return new ArrayList<>(viewFactoryMap.values());
 	}
 }

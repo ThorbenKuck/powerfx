@@ -18,6 +18,7 @@
         <module>powerui</module>
         <module>test</module>
         <module>core</module>
+        <module>annotations</module>
     </modules>
 
     <scm>

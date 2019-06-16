@@ -3,7 +3,10 @@ package com.github.thorbenkuck.powerfx.annotations;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Documented
-public @interface AutoLoad {
+public @interface InjectStage {
+
+	boolean mainStage() default true;
+
 }

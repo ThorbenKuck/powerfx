@@ -1,14 +1,12 @@
 package com.github.thorbenkuck.powerfx.annotations;
 
-import com.github.thorbenkuck.powerfx.Presenter;
-
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 @Documented
-public @interface ViewImplementation {
+public @interface Presenter {
 
-	Class<? extends Presenter> value();
+	Class<?>[] identifiedBy() default {};
 
 }

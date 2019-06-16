@@ -10,23 +10,23 @@ public interface SuperController {
 		return new NativeSuperController();
 	}
 
+	<T> T show(Class<T> type);
+
+	<T> T showSeparate(Class<T> type);
+
+	void register(PresenterFactory presenterFactory);
+
+	void register(ViewFactory viewFactory);
+
+	void register(Class<?> type, PresenterFactory<?> presenterFactory);
+
+	void register(Class<?> type, ViewFactory<?> viewFactory);
+
 	void createNewMainStage();
 
-	UICache getCache();
-
-	void show(Class<? extends View> type);
-
 	void setStageSupplier(Supplier<Stage> stageSupplier);
-
-	<T extends View> T showSeparate(Class<T> type);
 
 	void setViewDispatcher(ViewDispatcher viewDispatcher);
 
 	void setMainStage(Stage stage);
-
-	<T extends View, S extends Presenter<T>> void register(Class<T> type, PresenterFactory<T, S> presenterFactory, ViewFactory<T, S> viewFactory);
-
-	<T extends View, S extends Presenter<T>> void register(Class<T> type, PresenterFactory<T, S> presenterFactory);
-
-	<T extends View, S extends Presenter<T>> void register(Class<T> type, ViewFactory<T, S> viewFactory);
 }

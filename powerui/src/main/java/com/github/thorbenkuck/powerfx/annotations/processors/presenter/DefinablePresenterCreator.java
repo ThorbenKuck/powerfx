@@ -7,7 +7,9 @@ import com.github.thorbenkuck.powerfx.annotations.Displayed;
 import com.github.thorbenkuck.powerfx.annotations.InjectView;
 import com.squareup.javapoet.*;
 
+import javax.annotation.Generated;
 import javax.lang.model.element.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +17,19 @@ public class DefinablePresenterCreator {
 
 	private final TypeElement annotatedClass;
 	private final List<ExecutableElement> methods = new ArrayList<>();
-	private ExecutableElement construct;
-	private ExecutableElement displayed;
-	private ExecutableElement injectView;
-	private ExecutableElement destroy;
+	private final ConstructMethodCreator constructMethodCreator = new ConstructMethodCreator();
+	private final DisplayedMethodCreator displayedMethodCreator = new DisplayedMethodCreator();
+	private final InjectViewMethodCreator injectViewMethodCreator = new InjectViewMethodCreator();
+	private final DestroyMethodCreator destroyMethodCreator = new DestroyMethodCreator();
+	private final InjectMethodCreator injectMethodCreator = new InjectMethodCreator();
+	private final DefineMethodCreator defineMethodCreator;
 	private boolean samePackageNeeded = false;
 	private String name;
 
 
 	private DefinablePresenterCreator(TypeElement annotatedClass) {
 		this.annotatedClass = annotatedClass;
+		defineMethodCreator = new DefineMethodCreator(annotatedClass);
 	}
 
 	public static DefinablePresenterCreator create(TypeElement typeElement) {
@@ -37,9 +42,10 @@ public class DefinablePresenterCreator {
 
 	private void processMethods() {
 		for (ExecutableElement executableElement : methods) {
+			injectMethodCreator.addExecutableElement(executableElement);
 			if (executableElement.getAnnotation(Displayed.class) != null) {
 				if (executableElement.getParameters().isEmpty()) {
-					displayed = executableElement;
+					displayedMethodCreator.setDisplay(executableElement);
 					verifyPackageVisibility(executableElement);
 				} else {
 					// TODO Handle else
@@ -48,7 +54,7 @@ public class DefinablePresenterCreator {
 
 			if (executableElement.getAnnotation(Construct.class) != null) {
 				if (executableElement.getParameters().isEmpty()) {
-					construct = executableElement;
+					constructMethodCreator.setConstruct(executableElement);
 					verifyPackageVisibility(executableElement);
 				} else {
 					// TODO Handle else
@@ -59,7 +65,8 @@ public class DefinablePresenterCreator {
 				if (executableElement.getParameters().isEmpty()) {
 					// TODO Handle
 				} else if (executableElement.getParameters().size() == 1) {
-					injectView = executableElement;
+					injectViewMethodCreator.setInjectView(executableElement);
+					injectViewMethodCreator.setVariableElement(executableElement.getParameters().get(0));
 					verifyPackageVisibility(executableElement);
 				} else {
 					// TODO Handle
@@ -68,7 +75,7 @@ public class DefinablePresenterCreator {
 
 			if (executableElement.getAnnotation(Destroy.class) != null) {
 				if (executableElement.getParameters().isEmpty()) {
-					destroy = executableElement;
+					destroyMethodCreator.setDestroy(executableElement);
 					verifyPackageVisibility(executableElement);
 				} else {
 					// TODO Handle else
@@ -76,7 +83,7 @@ public class DefinablePresenterCreator {
 			}
 		}
 
-		if (injectView == null) {
+		if (!injectViewMethodCreator.willCreate()) {
 			// TODO Handle inject view annotation missing
 		}
 	}
@@ -88,8 +95,8 @@ public class DefinablePresenterCreator {
 				if (executableElement.getKind() == ElementKind.METHOD) {
 					methods.add(executableElement);
 				}
-				if(executableElement.getKind() == ElementKind.CONSTRUCTOR) {
-					if(executableElement.getParameters().isEmpty()) {
+				if (executableElement.getKind() == ElementKind.CONSTRUCTOR) {
+					if (executableElement.getParameters().isEmpty()) {
 						verifyPackageVisibility(executableElement);
 					}
 				}
@@ -100,63 +107,36 @@ public class DefinablePresenterCreator {
 	}
 
 	private void verifyPackageVisibility(ExecutableElement executableElement) {
-		if(executableElement.getModifiers().contains(Modifier.PRIVATE)) {
-			// TODO Handle method not accessible
-		} else if(!executableElement.getModifiers().contains(Modifier.PUBLIC)) {
+		if (executableElement.getModifiers().contains(Modifier.PRIVATE)) {
+			// TODO Show warning and generate Reflection-Code
+		} else if (!executableElement.getModifiers().contains(Modifier.PUBLIC)) {
 			samePackageNeeded = true;
 		}
 	}
 
 	public TypeSpec create() {
 		TypeSpec.Builder builder = TypeSpec.classBuilder(getName())
-				.addSuperinterface(ParameterizedTypeName.get(ClassName.get(DefinablePresenter.class), TypeName.get(annotatedClass.asType())));
-
-		builder.addField(FieldSpec.builder(TypeName.get(annotatedClass.asType()), "presenter")
-				.addModifiers(Modifier.FINAL, Modifier.PRIVATE)
-				.build());
-
-		builder.addInitializerBlock(CodeBlock.builder()
-				.add("presenter = new $T()", ClassName.get(annotatedClass))
-				.build());
-
-		if(construct != null) {
-			delegateMethodCall(construct, "construct", builder);
-		}
-
-		if(destroy != null) {
-			delegateMethodCall(destroy, "destroy", builder);
-		}
-
-		if(displayed != null) {
-			delegateMethodCall(displayed, "displayed", builder);
-		}
-
-		builder.addMethod(MethodSpec.methodBuilder("injectView")
-				.addAnnotation(Override.class)
-				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-				.addParameter(ParameterSpec.builder(TypeName.OBJECT, "view").build())
-				.addCode(CodeBlock.builder()
-						.add("presenter.$L(view)", injectView.getSimpleName())
+				.addModifiers(Modifier.PRIVATE)
+				.addAnnotation(AnnotationSpec.builder(Generated.class)
+						.addMember("value", "$S", PresenterFactoryCreator.class.getName())
+						.addMember("date", "$S", LocalDateTime.now().toString())
 						.build())
-				.build());
+				.addSuperinterface(ParameterizedTypeName.get(ClassName.get(DefinablePresenter.class), TypeName.get(annotatedClass.asType())))
+				.addField(FieldSpec.builder(TypeName.get(annotatedClass.asType()), "presenter")
+						.addModifiers(Modifier.FINAL, Modifier.PRIVATE)
+						.build())
+				.addInitializerBlock(CodeBlock.builder()
+						.addStatement("presenter = new $T()", ClassName.get(annotatedClass))
+						.build());
 
-		builder.addMethod(MethodSpec.methodBuilder("define")
-				.returns(TypeName.get(annotatedClass.asType()))
-				.addCode(CodeBlock.builder().add("return presenter").build())
-				.addAnnotation(Override.class)
-				.build());
+		constructMethodCreator.apply(builder);
+		destroyMethodCreator.apply(builder);
+		displayedMethodCreator.apply(builder);
+		injectViewMethodCreator.apply(builder);
+		injectMethodCreator.apply(builder);
+		defineMethodCreator.apply(builder);
 
 		return builder.build();
-	}
-
-	private void delegateMethodCall(ExecutableElement realMethod, String delegateName, TypeSpec.Builder builder) {
-		builder.addMethod(MethodSpec.methodBuilder(delegateName)
-				.addAnnotation(Override.class)
-				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-				.addCode(CodeBlock.builder()
-						.add("presenter.$L()", realMethod.getSimpleName())
-						.build())
-				.build());
 	}
 
 	public boolean isSamePackageNeeded() {

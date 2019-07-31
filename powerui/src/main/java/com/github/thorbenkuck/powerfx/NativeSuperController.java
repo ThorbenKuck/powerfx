@@ -1,5 +1,6 @@
 package com.github.thorbenkuck.powerfx;
 
+import com.github.thorbenkuck.di.WiredTypes;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
@@ -9,6 +10,7 @@ import java.util.function.Supplier;
 
 class NativeSuperController implements SuperController {
 
+	private final WiredTypes wiredTypes = new WiredTypes();
 	private final AtomicReference<DefinableView> currentView = new AtomicReference<>();
 	private final AtomicReference<DefinablePresenter> currentPresenter = new AtomicReference<>();
 	private final AtomicReference<Stage> mainStage = new AtomicReference<>();

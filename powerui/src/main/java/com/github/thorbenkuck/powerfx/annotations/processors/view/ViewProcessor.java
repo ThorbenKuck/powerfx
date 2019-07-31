@@ -1,18 +1,22 @@
 package com.github.thorbenkuck.powerfx.annotations.processors.view;
 
+import com.github.thorbenkuck.powerfx.annotations.View;
+import com.github.thorbenkuck.powerfx.annotations.processors.Logger;
 import com.github.thorbenkuck.powerfx.annotations.processors.MVPProcessor;
-import com.google.auto.service.AutoService;
 
-import javax.annotation.processing.Processor;
-import javax.annotation.processing.RoundEnvironment;
-import javax.lang.model.element.TypeElement;
-import java.util.Set;
+import javax.lang.model.element.Element;
+import java.lang.annotation.Annotation;
 
-@AutoService(Processor.class)
+//@AutoService(Processor.class)
 public class ViewProcessor extends MVPProcessor {
 
 	@Override
-	public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-		return false;
+	protected void handle(Element element, Logger logger) {
+
+	}
+
+	@Override
+	protected Class<? extends Annotation> supportedAnnotation() {
+		return View.class;
 	}
 }

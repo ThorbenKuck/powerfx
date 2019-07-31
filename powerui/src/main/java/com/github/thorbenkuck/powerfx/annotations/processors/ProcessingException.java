@@ -2,7 +2,7 @@ package com.github.thorbenkuck.powerfx.annotations.processors;
 
 import javax.lang.model.element.Element;
 
-public class ProcessingException extends Exception {
+public class ProcessingException extends RuntimeException {
 
 	private final String msg;
 	private final Element element;

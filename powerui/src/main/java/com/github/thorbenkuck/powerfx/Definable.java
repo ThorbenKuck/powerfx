@@ -1,5 +1,7 @@
 package com.github.thorbenkuck.powerfx;
 
+import com.github.thorbenkuck.di.WiredTypes;
+
 public interface Definable<T> {
 
 	T define();
@@ -22,8 +24,9 @@ public interface Definable<T> {
 	/**
 	 * Defined by Inject
 	 *
-	 * @param object the Object to Inject
+	 * @param wiredTypes the WiredTypes instance, to fetch the instances from
 	 */
-	default void inject(Object object) {}
+	default void inject(WiredTypes wiredTypes) {
+	}
 
 }

@@ -1,21 +1,17 @@
 package com.github.thorbenkuck.powerfx.annotations.processors;
 
-import com.google.auto.service.AutoService;
-
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import javax.tools.Diagnostic;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-@AutoService(Processor.class)
 public abstract class MVPProcessor extends AbstractProcessor {
 
 	private final List<Element> doneProcessing = new ArrayList<>();
@@ -32,37 +28,47 @@ public abstract class MVPProcessor extends AbstractProcessor {
 		doneProcessing.add(typeElement);
 	}
 
-	protected void error(String msg, Element element, AnnotationMirror mirror) {
-		messager.printMessage(Diagnostic.Kind.ERROR, msg, element, mirror);
-	}
+	protected abstract void handle(Element element, Logger logger);
 
-	protected void error(String msg, Element element) {
-		messager.printMessage(Diagnostic.Kind.ERROR, msg, element);
-	}
-
-	protected void error(String msg) {
-		messager.printMessage(Diagnostic.Kind.ERROR, msg);
-	}
-
-	protected void log(String msg) {
-		messager.printMessage(Diagnostic.Kind.NOTE, msg);
-	}
-
-	protected void log(String msg, Element element) {
-		messager.printMessage(Diagnostic.Kind.NOTE, msg, element);
-	}
+	protected abstract Class<? extends Annotation> supportedAnnotation();
 
 	@Override
-	public SourceVersion getSupportedSourceVersion() {
+	public final SourceVersion getSupportedSourceVersion() {
 		return SourceVersion.latestSupported();
 	}
 
 	@Override
-	public synchronized void init(ProcessingEnvironment processingEnv) {
+	public final Set<String> getSupportedAnnotationTypes() {
+		Set<String> annotations = new LinkedHashSet<>();
+		annotations.add(supportedAnnotation().getCanonicalName());
+		return annotations;
+	}
+
+	@Override
+	public final synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 		types = processingEnv.getTypeUtils();
 		elements = processingEnv.getElementUtils();
 		filer = processingEnv.getFiler();
 		messager = processingEnv.getMessager();
+	}
+
+	@Override
+	public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+		for (Element element : roundEnv.getElementsAnnotatedWith(supportedAnnotation())) {
+			if (!hasBeenProcessed(element)) {
+				Logger logger = new Logger(element, messager);
+				try {
+					handle(element, logger);
+					markAsProcessed(element);
+				} catch (ProcessingException e) {
+					logger.error(e.getMsg(), e.getElement());
+				} catch (Exception e) {
+					logger.error("Could not write because of IOException: " + e.getMessage());
+				}
+			}
+		}
+
+		return true;
 	}
 }
